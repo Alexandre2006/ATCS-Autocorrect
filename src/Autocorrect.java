@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 /**
  * Autocorrect
@@ -11,6 +13,28 @@ import java.io.IOException;
  * @author Alexandre Haddad-Delaveau
  */
 public class Autocorrect {
+
+    public static void main(String[] args) {
+        // Demo word
+        String demoWord = "borange";
+
+        // Load the dictionary
+        String[] words = loadDictionary("large");
+
+        // Store top words
+        PriorityQueue<Result> pq = new PriorityQueue<>(10, resultComparator);
+
+        for (String word : words) {
+            pq.add(new Result(word, editDistance(demoWord, word)));
+        }
+
+        // Print the top 10 words
+        for (int i = 0; i < 10; i++) {
+            Result r = pq.poll();
+            System.out.println(r.word + " " + r.distance);
+        }
+
+    }
 
     /**
      * Constucts an instance of the Autocorrect class.
@@ -60,18 +84,24 @@ public class Autocorrect {
     }
 
     /**
-     * Calculates the edit distance between two words!
+     * Calculates the edit distance between two words
+     * Time Complexity: O(n*m) where n is the length of word1 and m is the length of word2.
+     * Space Complexity: Same as time complexity.
      * @param word1 The first word.
      * @param word2 The second word.
      * @return The edit distance between the two words.
      */
-    private static int editDistance(String word1, String word2) {
+    private static int editDistance(String word1, String word2, int limit) {
         // Special Case: if either word is empty
         if (word1.isEmpty()) {
             return word2.length();
         } else if (word2.isEmpty()) {
             return word1.length();
         }
+
+        // Convert both strings to lowercase
+        word1 = word1.toLowerCase();
+        word2 = word2.toLowerCase();
 
         // Create matrix to store edit distances
         int[][] editDistances = new int[word1.length() + 1][word2.length() + 1];
@@ -97,6 +127,11 @@ public class Autocorrect {
                     int delete = editDistances[i - 1][j] + 1;
                     int replace = editDistances[i - 1][j - 1] + 1;
                     editDistances[i][j] = Math.min(insert, Math.min(delete, replace));
+
+                    // Check if the limit has been reached
+                    if (editDistances[i][j] > limit) {
+                        return Integer.MAX_VALUE;
+                    }
                 }
             }
         }
@@ -104,4 +139,28 @@ public class Autocorrect {
         // Return the edit distance
         return editDistances[word1.length()][word2.length()];
     }
+
+    private static int editDistance(String word1, String word2) {
+        return editDistance(word1, word2, Integer.MAX_VALUE);
+    }
+
+    private static class Result {
+        String word;
+        int distance;
+
+        public Result(String word, int distance) {
+            this.word = word;
+            this.distance = distance;
+        }
+    }
+
+    private static Comparator<Result> resultComparator = new Comparator<Result>() {
+        @Override
+        public int compare(Result r1, Result r2) {
+            if (r1.distance == r2.distance) {
+                return r1.word.compareTo(r2.word);
+            }
+            return r1.distance - r2.distance;
+        }
+    };
 }
