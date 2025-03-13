@@ -1,9 +1,9 @@
-Name: YOUR NAME HERE
+Name: Alexandre Haddad-Delaveau
 
-| Date    |  Time  |                                     Update |
-|:--------|:------:|-------------------------------------------:|
-| April 5 | 9-10pm | I tried to write abstract, efficient code. |
-|         |        |                                            |
+| Date   |    Time     |                                                                                                                                                                                                                                                                                                                                                                                       Update |
+|:-------|:-----------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| Mar 13 | 12:45-13:45 | Tried reusing LCS, but came up with a slightly different algorithm. I think with the standard LCS algorithm, you could probably get to something similar to edit distance, but only addition / removing characters instead of substitution. With this algorithm, you can also calculate for substitution, which definitely helps with getting a more accurate edit distance for autocorrect. |
+|        |             |                                                                                                                                                                                                                                                                                                                                                                                              |
 
 
 To add a new row to the table, click into a cell and then hit shift-enter.

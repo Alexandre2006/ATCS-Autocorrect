@@ -8,16 +8,16 @@ import java.io.IOException;
  * A command-line tool to suggest similar words when given one not in the dictionary.
  * </p>
  * @author Zach Blick
- * @author YOUR NAME HERE
+ * @author Alexandre Haddad-Delaveau
  */
 public class Autocorrect {
 
     /**
      * Constucts an instance of the Autocorrect class.
      * @param words The dictionary of acceptable words.
-     * @param threshold The maximum number of edits a suggestion can have.
+     * @param limit The maximum number of edits a suggestion can have.
      */
-    public Autocorrect(String[] words, int threshold) {
+    public Autocorrect(String[] words, int limit) {
 
     }
 
@@ -57,5 +57,51 @@ public class Autocorrect {
         catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Calculates the edit distance between two words!
+     * @param word1 The first word.
+     * @param word2 The second word.
+     * @return The edit distance between the two words.
+     */
+    private static int editDistance(String word1, String word2) {
+        // Special Case: if either word is empty
+        if (word1.isEmpty()) {
+            return word2.length();
+        } else if (word2.isEmpty()) {
+            return word1.length();
+        }
+
+        // Create matrix to store edit distances
+        int[][] editDistances = new int[word1.length() + 1][word2.length() + 1];
+
+        // Fill in the first row and column
+        for (int i = 0; i <= word2.length(); i++) {
+            editDistances[0][i] = i;
+        }
+
+        for (int i = 0; i <= word1.length(); i++) {
+            editDistances[i][0] = i;
+        }
+
+        // Fill the rest of the matrix
+        for (int i = 1; i <= word1.length(); i++) {
+            for (int j = 1; j <= word2.length(); j++) {
+                // Check if the characters are the same
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    editDistances[i][j] = editDistances[i - 1][j - 1];
+                } else {
+                    // Find the minimum of the three possible operations
+                    int insert = editDistances[i][j - 1] + 1;
+                    int delete = editDistances[i - 1][j] + 1;
+                    int replace = editDistances[i - 1][j - 1] + 1;
+                    editDistances[i][j] = Math.min(insert, Math.min(delete, replace));
+                }
+            }
+        }
+
+        // Return the edit distance
+        return editDistances[word1.length()][word2.length()];
     }
 }
