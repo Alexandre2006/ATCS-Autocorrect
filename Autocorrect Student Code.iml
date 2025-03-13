@@ -33,6 +33,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="openjfx.javafx.controls" level="project" />
   </component>
 </module>
