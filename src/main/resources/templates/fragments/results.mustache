@@ -1,0 +1,16 @@
+<div id="config-status">
+    Edit Distance: {{editDistance}} - Max Results: {{responseLimit}}
+</div>
+
+<div id="suggestions-container">
+    {{#suggestions}}
+        {{#.}}
+            <span class="suggestion">{{.}}</span>
+        {{/.}}
+    {{/suggestions}}
+    {{^suggestions}}
+        {{#word}}
+            <div>Word Valid</div>
+        {{/word}}
+    {{/suggestions}}
+</div>

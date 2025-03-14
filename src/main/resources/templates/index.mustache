@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:hx-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Autocorrect</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        .suggestion {
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+        #config-status {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>Autocorrect</h1>
+
+<form>
+    <label for="word">Enter Word:</label>
+    <input type="text" id="word" name="word" value="{{word}}"
+           hx-trigger="input changed delay:200ms"
+           hx-post="/correct"
+           hx-target="#results-container">
+</form>
+
+<form>
+    <label for="editDistance">Max Edit Distance:</label>
+    <input type="number" id="editDistance" name="editDistance" value="{{editDistance}}"
+           hx-trigger="input changed delay:200ms"
+           hx-post="/set-edit-distance"
+           hx-target="#results-container">
+    <input type="hidden" name="word" id="hidden-word-1">
+</form>
+
+<form>
+    <label for="maxResults">Max Results:</label>
+    <input type="number" id="maxResults" name="maxResults" value="{{responseLimit}}"
+           hx-trigger="input changed delay:200ms"
+           hx-post="/set-max-results"
+           hx-target="#results-container">
+    <input type="hidden" name="word" id="hidden-word-2">
+</form>
+
+<div id="results-container">
+    <div id="config-status">
+        Edit Distance: {{editDistance}} - Max Results: {{responseLimit}}
+    </div>
+
+    <div id="suggestions-container">
+        {{#suggestions}}
+            {{#.}}
+                <span class="suggestion">{{.}}</span>
+            {{/.}}
+        {{/suggestions}}
+        {{^suggestions}}
+            {{#word}}
+                <div>Word Valid</div>
+            {{/word}}
+        {{/suggestions}}
+    </div>
+</div>
+
+<script>
+    // Keep the hidden word fields in sync with the main word input
+    document.getElementById('word').addEventListener('input', function() {
+        document.getElementById('hidden-word-1').value = this.value;
+        document.getElementById('hidden-word-2').value = this.value;
+    });
+</script>
+</body>
+</html>
