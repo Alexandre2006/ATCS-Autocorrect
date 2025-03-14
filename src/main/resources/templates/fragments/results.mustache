@@ -1,16 +1,30 @@
-<div id="config-status">
-    Edit Distance: {{editDistance}} - Max Results: {{responseLimit}}
-</div>
-
 <div id="suggestions-container">
-    {{#suggestions}}
-        {{#.}}
-            <span class="suggestion">{{.}}</span>
-        {{/.}}
-    {{/suggestions}}
-    {{^suggestions}}
-        {{#word}}
-            <div>Word Valid</div>
-        {{/word}}
-    {{/suggestions}}
+    <!-- Show suggestions if available -->
+    {{#isError}}
+        <div class="error">
+            {{error}}
+        </div>
+    {{/isError}}
+    {{^isError}}
+        {{#wordFound}}
+            <div class="info">
+                The word <b class="word">{{word}}</b> exists!
+            </div>
+        {{/wordFound}}
+        {{^wordFound}}
+            <div class="warning">
+                The word <b class="word">{{word}}</b> does not exist! Did you mean:
+            </div>
+            <div class="suggestions-container">
+                {{#suggestions}}
+                    {{#.}}
+                        <span class="suggestion">{{.}}</span>
+                    {{/.}}
+                {{/suggestions}}
+                {{^suggestions}}
+                    <span class="suggestion">No suggestions available</span>
+                {{/suggestions}}
+            </div>
+        {{/wordFound}}
+    {{/isError}}
 </div>

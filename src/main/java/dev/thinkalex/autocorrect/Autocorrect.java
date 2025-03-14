@@ -68,12 +68,6 @@ public class Autocorrect {
             matches[i] = results.get(i).word;
         }
 
-        // Log results
-        System.out.println("Typed: " + typed);
-        for (Result result : results) {
-            System.out.println(result.word + " " + result.distance);
-        }
-
         return matches;
     }
 
@@ -126,8 +120,6 @@ public class Autocorrect {
                     editDistances[i][j] = Math.min(insert, Math.min(delete, replace));
                 }
                 min = Math.min(min, editDistances[i][j]);
-                // Log min updated
-                System.out.println("Min updated to " + min);
             }
 
             // Early exit if the minimum edit distance is greater than the limit
@@ -166,7 +158,7 @@ public class Autocorrect {
     public List<Result> getTopResults(String word) {
         // Exit early if the word exists
         if (ignoreValidWords && dictionary.contains(word)) {
-            return Collections.emptyList();
+            return null;
         }
 
         // Store top words
@@ -199,11 +191,14 @@ public class Autocorrect {
         return results;
     }
 
-    public String[] getTopStrings(String word) {
+    public List<String> getTopStrings(String word) {
         List<Result> results = getTopResults(word);
-        String[] matches = new String[results.size()];
-        for (int i = 0; i < results.size(); i++) {
-            matches[i] = results.get(i).word;
+        if (results == null) {
+            return null;
+        }
+        List<String> matches = new ArrayList<>();
+        for (Result result : results) {
+            matches.add(result.word);
         }
         return matches;
     }
