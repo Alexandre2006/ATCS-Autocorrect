@@ -1,8 +1,6 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.PriorityQueue;
+package dev.thinkalex.autocorrect;
+
+import java.util.*;
 
 /**
  * Autocorrect
@@ -13,28 +11,8 @@ import java.util.PriorityQueue;
  * @author Alexandre Haddad-Delaveau
  */
 public class Autocorrect {
-
-    public static void main(String[] args) {
-        // Demo word
-        String demoWord = "borange";
-
-        // Load the dictionary
-        String[] words = loadDictionary("large");
-
-        // Store top words
-        PriorityQueue<Result> pq = new PriorityQueue<>(10, resultComparator);
-
-        for (String word : words) {
-            pq.add(new Result(word, editDistance(demoWord, word)));
-        }
-
-        // Print the top 10 words
-        for (int i = 0; i < 10; i++) {
-            Result r = pq.poll();
-            System.out.println(r.word + " " + r.distance);
-        }
-
-    }
+    HashSet<String> dictionary;
+    private final int limit;
 
     /**
      * Constucts an instance of the Autocorrect class.
@@ -42,45 +20,34 @@ public class Autocorrect {
      * @param limit The maximum number of edits a suggestion can have.
      */
     public Autocorrect(String[] words, int limit) {
+        // Load the dictionary
+        dictionary = new HashSet<>();
+        dictionary.addAll(Arrays.asList(words));
 
+        // Save limit
+        this.limit = limit;
     }
 
     /**
      * Runs a test from the tester file, AutocorrectTester.
      * @param typed The (potentially) misspelled word, provided by the user.
      * @return An array of all dictionary words with an edit distance less than or equal
-     * to threshold, sorted by edit distnace, then sorted alphabetically.
+     * to threshold, sorted by edit distance, then sorted alphabetically.
      */
     public String[] runTest(String typed) {
-
-        return new String[0];
-    }
-
-
-    /**
-     * Loads a dictionary of words from the provided textfiles in the dictionaries directory.
-     * @param dictionary The name of the textfile, [dictionary].txt, in the dictionaries directory.
-     * @return An array of Strings containing all words in alphabetical order.
-     */
-    private static String[] loadDictionary(String dictionary)  {
-        try {
-            String line;
-            BufferedReader dictReader = new BufferedReader(new FileReader("dictionaries/" + dictionary + ".txt"));
-            line = dictReader.readLine();
-
-            // Update instance variables with test data
-            int n = Integer.parseInt(line);
-            String[] words = new String[n];
-
-            for (int i = 0; i < n; i++) {
-                line = dictReader.readLine();
-                words[i] = line;
-            }
-            return words;
+        List<Result> results = getTopMatches(typed);
+        String[] matches = new String[results.size()];
+        for (int i = 0; i < results.size(); i++) {
+            matches[i] = results.get(i).word;
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
+
+        // Log results
+        System.out.println("Typed: " + typed);
+        for (Result result : results) {
+            System.out.println(result.word + " " + result.distance);
         }
+
+        return matches;
     }
 
     /**
@@ -91,7 +58,7 @@ public class Autocorrect {
      * @param word2 The second word.
      * @return The edit distance between the two words.
      */
-    private static int editDistance(String word1, String word2, int limit) {
+    private int editDistance(String word1, String word2) {
         // Special Case: if either word is empty
         if (word1.isEmpty()) {
             return word2.length();
@@ -127,21 +94,12 @@ public class Autocorrect {
                     int delete = editDistances[i - 1][j] + 1;
                     int replace = editDistances[i - 1][j - 1] + 1;
                     editDistances[i][j] = Math.min(insert, Math.min(delete, replace));
-
-                    // Check if the limit has been reached
-                    if (editDistances[i][j] > limit) {
-                        return Integer.MAX_VALUE;
-                    }
                 }
             }
         }
 
         // Return the edit distance
-        return editDistances[word1.length()][word2.length()];
-    }
-
-    private static int editDistance(String word1, String word2) {
-        return editDistance(word1, word2, Integer.MAX_VALUE);
+        return editDistances[word1.length()][word2.length()] > limit ?  Integer.MAX_VALUE : editDistances[word1.length()][word2.length()];
     }
 
     private static class Result {
@@ -154,7 +112,7 @@ public class Autocorrect {
         }
     }
 
-    private static Comparator<Result> resultComparator = new Comparator<Result>() {
+    private static final Comparator<Result> resultComparator = new Comparator<Result>() {
         @Override
         public int compare(Result r1, Result r2) {
             if (r1.distance == r2.distance) {
@@ -163,4 +121,34 @@ public class Autocorrect {
             return r1.distance - r2.distance;
         }
     };
+
+    /**
+     * Returns the top matches for a given word.
+     * @param word The word to find matches for.
+     * @return A list of the top matches.
+     */
+    private List<Result> getTopMatches(String word) {
+
+        // Store top words
+        PriorityQueue<Result> pq = new PriorityQueue<>(10, resultComparator);
+
+        // Go through all words in the dictionary
+        for (String dictionaryWord : dictionary.stream().toList()) {
+            pq.add(new Result(dictionaryWord, editDistance(dictionaryWord, word)));
+        }
+
+        // Return top matches
+        List<Result> results = new ArrayList<>();
+        while (!pq.isEmpty()) {
+            Result result = pq.poll();
+
+            // Break if the edit distance is too high
+            if (result.distance == Integer.MAX_VALUE) {
+                break;
+            }
+
+            results.add(result);
+        }
+        return results;
+    }
 }
