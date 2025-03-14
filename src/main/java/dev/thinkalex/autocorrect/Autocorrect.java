@@ -1,10 +1,13 @@
 package dev.thinkalex.autocorrect;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -242,7 +245,8 @@ public class Autocorrect {
     private static String[] loadDictionary(String dictionary)  {
         try {
             String line;
-            BufferedReader dictReader = new BufferedReader(new FileReader("dictionaries/" + dictionary + ".txt"));
+            Resource dictionaryResource = new ClassPathResource("dictionaries/" + dictionary + ".txt");
+            BufferedReader dictReader = new BufferedReader(new InputStreamReader(dictionaryResource.getInputStream()));
             line = dictReader.readLine();
 
             // Update instance variables with test data
