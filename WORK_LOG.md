@@ -1,6 +1,6 @@
 Name: Alexandre Haddad-Delaveau
 
-Time Spent: 7h00
+Time Spent: 9h00
 
 | Date   |    Time     | Update                                                                                                                                                                                                                                                                                                                                                                                       |
 |:-------|:-----------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -13,3 +13,4 @@ Time Spent: 7h00
 | Mar 13 | 19:30-22:00 | HOLY I GOT CARRIED AWAY. The UI looks a lot nicer now, there is proper error handling, and... well it's just really good. You should try it! Why did this take so long: 1. learned spring boot... 2. learned mustache... 3. learned htmx... 4. CSS is really hard :(... to used to having copilot write it lol... but i made it!                                                             |
 | Mar 13 | 22:00-23:00 | Configured app to have support for a TUI, not a CLI. Will eventually implement, but it was already a pain figuring out how args worked in spring boot. And then learning a little bit about Spring Shell! Really cool project, but have to go to sleep... it's late.                                                                                                                         |
 | Mar 16 | 17:00-17:45 | Started building the TUI w/ Spring Shell. Overall going pretty well. It's definitely something new and pretty tricky for me, but still enjoying it.                                                                                                                                                                                                                                          |
+| Mar 16 | 17:45-19:00 | Finished my UI w/ Spring Shell... Kind of a cool library, but I agree w/ the fact that it's definitely still WIP. A lot of stuff is poorly documented or hard to figure out. But, I got it working decently. Might also just make like a CLI version. Right now have a web UI and a TUI.                                                                                                     |

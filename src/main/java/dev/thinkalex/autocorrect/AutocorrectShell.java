@@ -3,13 +3,18 @@ package dev.thinkalex.autocorrect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
+import org.springframework.messaging.Message;
 import org.springframework.shell.component.view.TerminalUI;
 import org.springframework.shell.component.view.TerminalUIBuilder;
 import org.springframework.shell.component.view.control.*;
 import org.springframework.shell.component.view.event.EventLoop;
 import org.springframework.shell.component.view.event.KeyEvent;
+import org.springframework.shell.geom.HorizontalAlign;
+import org.springframework.shell.geom.Rectangle;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+
+import java.util.List;
 
 import static java.lang.System.exit;
 
@@ -25,6 +30,13 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
 
     // TUI
     private TerminalUI tui;
+
+    private InputView wordInput;
+    private InputView editDistanceInput;
+    private InputView responseLimitInput;
+    private ListView<String> suggestionsView;
+
+    private StatusBarView statusBar;
 
     private EventLoop eventLoop;
 
@@ -43,6 +55,57 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
         exit(0);
     }
 
+    private void refreshSuggestions() {
+        // Validate number inputs
+        int editDistance = 0;
+        int responseLimit = 0;
+        try {
+            editDistance = Integer.parseInt(editDistanceInput.getInputText());
+            if (editDistance < 1) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            // Clear suggestions w/ error
+            suggestionsView.setItems(List.of("Invalid Edit Distance"));
+            return;
+        }
+
+        try {
+            responseLimit = Integer.parseInt(responseLimitInput.getInputText());
+            if (responseLimit < 1) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            // Clear suggestions w/ error
+            suggestionsView.setItems(List.of("Invalid Response Limit"));
+            return;
+        }
+
+        // Validate string inputs
+        String word = wordInput.getInputText();
+        if (word.isEmpty()) {
+            // Clear suggestions w/ error
+            suggestionsView.setItems(List.of("Please enter a word"));
+            return;
+        }
+
+        // Configure autocorrect
+        autocorrect.setMaxEditDistance(editDistance);
+        autocorrect.setResponseLimit(responseLimit);
+
+        // Get suggestions
+        List<String> suggestions = autocorrect.getTopStrings(word);
+
+        // Check if word exists (null = word exists, [] = no suggestions)
+        if (suggestions == null) {
+            suggestionsView.setItems(List.of("Valid dictionary word!"));
+        } else if (suggestions.isEmpty()) {
+            suggestionsView.setItems(List.of("No suggestions found!"));
+        } else {
+            suggestionsView.setItems(suggestions);
+        }
+    }
+
     // Menu / Status Bars
     private MenuBarView buildMenuBar(EventLoop eventLoop, TerminalUI component) {
         // Callbacks
@@ -50,8 +113,8 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
 
         // Add options
         MenuBarView menuBar = MenuBarView.of(
-                MenuBarView.MenuBarItem.of("Quit",
-                                MenuView.MenuItem.of("Confirm?", MenuView.MenuItemCheckStyle.NOCHECK, quitAction))
+                MenuBarView.MenuBarItem.of("File",
+                                MenuView.MenuItem.of("Quit?", MenuView.MenuItemCheckStyle.NOCHECK, quitAction))
                         .setHotKey(KeyEvent.Key.f | KeyEvent.KeyMask.CtrlMask));
 
         // Configure & Return
@@ -71,17 +134,49 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
     // Main View
     private AppView buildMainView(EventLoop eventLoop, TerminalUI component) {
         // Create Main GridView
-        BoxView mainView = new BoxView();
-        mainView.setDrawFunction((screen, rect) -> {
-            screen.writerBuilder().build()
-                    .text("hi", 0, 0);
-            return rect;
-        });
+        GridView mainView = new GridView();
         component.configure(mainView);
+
+        // Set layout
+        mainView.setRowSize(3, 3, 10);
+        mainView.setColumnSize(20, 20);
+        mainView.setShowBorders(true);
+        mainView.setTitleAlign(HorizontalAlign.CENTER);
+        mainView.setTitle("Autocorrect");
+
+        // Create word input
+        wordInput = new InputView();
+        component.configure(wordInput);
+        wordInput.setTitle("Word to Correct:");
+        wordInput.setShowBorder(true);
+
+        // Create edit distance input
+        editDistanceInput = new InputView();
+        component.configure(editDistanceInput);
+        editDistanceInput.setTitle("Max Edit Distance:");
+        editDistanceInput.setShowBorder(true);
+
+        // Create response limit input
+        responseLimitInput = new InputView();
+        component.configure(responseLimitInput);
+        responseLimitInput.setTitle("Max Suggestions:");
+        responseLimitInput.setShowBorder(true);
+
+        // Create suggestions
+        suggestionsView = new ListView<>();
+        component.configure(suggestionsView);
+        suggestionsView.setShowBorder(true);
+        suggestionsView.setTitle("Suggestions:");
+        suggestionsView.setItems(List.of("No suggestions yet!"));
+
+        mainView.addItem(wordInput, 0, 0, 1, 2, 0, 0);
+        mainView.addItem(editDistanceInput, 1, 0, 1, 1, 0, 0);
+        mainView.addItem(responseLimitInput, 1, 1, 1, 1, 0, 0);
+        mainView.addItem(suggestionsView, 2, 0, 1, 2, 0, 0);
 
         // Create Menu & Status Bars
         MenuBarView menuBar = buildMenuBar(eventLoop, component);
-        StatusBarView statusBar = buildStatusBar(eventLoop, component);
+        statusBar = buildStatusBar(eventLoop, component);
 
         // Create app view
         AppView appView = new AppView(mainView, menuBar, statusBar);
@@ -101,7 +196,7 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
         tui = builder.build();
         eventLoop = tui.getEventLoop();
 
-        // Register Events
+        // Register Events (Quit)
         eventLoop.onDestroy(eventLoop.keyEvents()
                 .doOnNext(m -> {
                     if (m.getPlainKey() == KeyEvent.Key.q && m.hasCtrl()) {
@@ -110,12 +205,18 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
                 })
                 .subscribe());
 
+        // Log events
+        eventLoop.onDestroy(eventLoop.events().doOnEach(
+                m -> {
+                    refreshSuggestions();
+                }).subscribe());
+
         // Build View
         AppView mainView = buildMainView(eventLoop, tui);
 
         // Set root & focus
         tui.setRoot(mainView, true);
-        tui.setFocus(mainView);
+        tui.setFocus(wordInput);
 
         // Run the TUI
         tui.run();
