@@ -3,14 +3,12 @@ package dev.thinkalex.autocorrect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
-import org.springframework.messaging.Message;
 import org.springframework.shell.component.view.TerminalUI;
 import org.springframework.shell.component.view.TerminalUIBuilder;
 import org.springframework.shell.component.view.control.*;
 import org.springframework.shell.component.view.event.EventLoop;
 import org.springframework.shell.component.view.event.KeyEvent;
 import org.springframework.shell.geom.HorizontalAlign;
-import org.springframework.shell.geom.Rectangle;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 
@@ -94,7 +92,7 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
         autocorrect.setResponseLimit(responseLimit);
 
         // Get suggestions
-        List<String> suggestions = autocorrect.getTopStrings(word);
+        List<String> suggestions = autocorrect.getTopStrings(word.toLowerCase());
 
         // Check if word exists (null = word exists, [] = no suggestions)
         if (suggestions == null) {
