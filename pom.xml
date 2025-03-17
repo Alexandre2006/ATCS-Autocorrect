@@ -123,6 +123,15 @@
                     <parameters>true</parameters>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>dev.thinkalex.autocorrect.AutocorrectApplication</mainClass>
+                    <arguments>"--cli"</arguments>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
