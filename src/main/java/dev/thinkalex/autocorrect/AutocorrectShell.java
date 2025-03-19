@@ -12,6 +12,7 @@ import org.springframework.shell.geom.HorizontalAlign;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 
+import java.util.HashSet;
 import java.util.List;
 
 import static java.lang.System.exit;
@@ -218,5 +219,45 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
 
         // Run the TUI
         tui.run();
+    }
+
+    // Benchmark Method
+    @ShellMethod(value = "Benchmark performance!", key = "--benchmark")
+    public void benchmark() {
+        // Configure Optimizations
+        autocorrect.setMaxEditDistance(2);
+        autocorrect.setResponseLimit(10);
+        autocorrect.setIgnoreValidWords(false);
+
+        // Start measuring time
+        long startTime = System.currentTimeMillis();
+
+        // Loop through each word, updating status every 1k words
+        int complete = 0;
+        for (String word : autocorrect.dictionary) {
+            autocorrect.getTopStrings(word);
+            complete++;
+
+            // Clear terminal
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+
+            // Print benchmark state
+            long currentTime = System.currentTimeMillis();
+            long averageTime = (currentTime - startTime) / complete;
+            System.out.println("Benchmark Progress: " + ((complete / autocorrect.dictionary.size()) * 100.0) + "% complete (" + complete + "/" + autocorrect.dictionary.size() + ")");
+            System.out.println("Time per word: " + averageTime + "ms");
+        }
+
+        // Clear terminal
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+
+        // Log end time difference
+        long endTime = System.currentTimeMillis();
+        long averageTime = (endTime - startTime) / autocorrect.dictionary.size();
+        System.out.println("Benchmark Complete!");
+        System.out.println("Time Taken: " + ((endTime - startTime) / 1000.0) + " seconds");
+        System.out.println("Time per word: " + averageTime + "ms");
     }
 }

@@ -25,7 +25,7 @@ public class Autocorrect {
     // Configuration
     private int editDistanceLimit;
     private int responseLimit;
-    private final boolean ignoreValidWords;
+    private boolean ignoreValidWords;
 
 
     public Autocorrect(String[] words, int editDistanceLimit, int responseLimit, boolean ignoreValidWords) {
@@ -270,6 +270,14 @@ public class Autocorrect {
 
     public int getMaxEditDistance() {
         return editDistanceLimit;
+    }
+
+    public void setIgnoreValidWords(boolean ignoreValidWords) {
+        this.ignoreValidWords = ignoreValidWords;
+    }
+
+    public boolean getIgnoreValidWords() {
+        return ignoreValidWords;
     }
 
     public void setResponseLimit(int responseLimit) {
