@@ -225,39 +225,40 @@ public class AutocorrectShell implements CommandLineRunner, ExitCodeGenerator {
     @ShellMethod(value = "Benchmark performance!", key = "--benchmark")
     public void benchmark() {
         // Configure Optimizations
-        autocorrect.setMaxEditDistance(2);
+        autocorrect.setMaxEditDistance(3);
         autocorrect.setResponseLimit(10);
         autocorrect.setIgnoreValidWords(false);
 
         // Start measuring time
         long startTime = System.currentTimeMillis();
 
-        // Loop through each word, updating status every 1k words
+        // Loop through each word
         int complete = 0;
         for (String word : autocorrect.dictionary) {
             autocorrect.getTopStrings(word);
             complete++;
 
-            // Clear terminal
-            System.out.print("\033[H\033[2J");
-            System.out.flush();
+            // Clear terminal less frequently to improve performance
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
 
             // Print benchmark state
             long currentTime = System.currentTimeMillis();
-            long averageTime = (currentTime - startTime) / complete;
-            System.out.println("Benchmark Progress: " + ((complete / autocorrect.dictionary.size()) * 100.0) + "% complete (" + complete + "/" + autocorrect.dictionary.size() + ")");
-            System.out.println("Time per word: " + averageTime + "ms");
+            double averageTime = (currentTime - startTime) / (double)complete;
+            System.out.println("Benchmark Progress: " + String.format("%.2f", ((complete * 100.0) / autocorrect.dictionary.size())) +
+                    "% complete (" + complete + "/" + autocorrect.dictionary.size() + ")");
+            System.out.println("Time per word: " + String.format("%.2f", averageTime) + "ms");
         }
 
         // Clear terminal
         System.out.print("\033[H\033[2J");
         System.out.flush();
 
-        // Log end time difference
+        // Log final results
         long endTime = System.currentTimeMillis();
-        long averageTime = (endTime - startTime) / autocorrect.dictionary.size();
+        double averageTime = (endTime - startTime) / (double)autocorrect.dictionary.size();
         System.out.println("Benchmark Complete!");
-        System.out.println("Time Taken: " + ((endTime - startTime) / 1000.0) + " seconds");
-        System.out.println("Time per word: " + averageTime + "ms");
+        System.out.println("Time Taken: " + String.format("%.2f", ((endTime - startTime) / 1000.0)) + " seconds");
+        System.out.println("Time per word: " + String.format("%.2f", averageTime) + "ms");
     }
 }

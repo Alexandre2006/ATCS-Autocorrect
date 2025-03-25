@@ -21,14 +21,17 @@ import java.util.*;
 public class Autocorrect {
     // Dictionary
     HashSet<String> dictionary;
+    HashMap<String, ArrayList<String>> tokens = new HashMap<>();
 
     // Configuration
     private int editDistanceLimit;
     private int responseLimit;
     private boolean ignoreValidWords;
+    private int tokenSize = 3;
+    private static boolean tokenizeWords;
 
 
-    public Autocorrect(String[] words, int editDistanceLimit, int responseLimit, boolean ignoreValidWords) {
+    public Autocorrect(String[] words, int editDistanceLimit, int responseLimit, boolean ignoreValidWords, boolean tokenizeWords) {
         // Load the dictionary
         dictionary = new HashSet<>();
         dictionary.addAll(Arrays.asList(words));
@@ -37,6 +40,15 @@ public class Autocorrect {
         this.editDistanceLimit = editDistanceLimit;
         this.responseLimit = responseLimit;
         this.ignoreValidWords = ignoreValidWords;
+        this.tokenizeWords = tokenizeWords;
+
+        // Tokenize Words
+        if (tokenizeWords) {
+            for (String word : dictionary) {
+                addTokenizedWord(word);
+            }
+        }
+
     }
 
     /**
@@ -46,14 +58,14 @@ public class Autocorrect {
      * @param limit The maximum number of edits a suggestion can have.
      */
     public Autocorrect(String[] words, int limit) {
-        this(words, limit, Integer.MAX_VALUE, false);
+        this(words, limit, Integer.MAX_VALUE, false, false);
     }
 
     /**
      * Special constructor for Autowiring.
      */
     public Autocorrect() {
-        this(loadDictionary("large"), 2, 10, true);
+        this(loadDictionary("large"), 2, 10, true, true);
     }
 
     /**
@@ -167,7 +179,7 @@ public class Autocorrect {
         PriorityQueue<Result> pq = new PriorityQueue<>(10, resultComparator);
 
         // Go through all words in the dictionary
-        for (String dictionaryWord : dictionary.stream().toList()) {
+        for (String dictionaryWord : getPotentialWords(word)) {
             pq.add(new Result(dictionaryWord, editDistance(dictionaryWord, word)));
         }
 
@@ -260,6 +272,62 @@ public class Autocorrect {
         }
         catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    // Functions for tokenization
+    private List<String> getPotentialWords(String word) {
+        Set<String> words = new HashSet<>();
+
+        if (word.length() >= (tokenSize + 1) && tokenizeWords) {
+            // Tokenize word
+            List<String> wordTokens = tokenizeWord(word);
+
+            // Get compatible words
+            for (String token : wordTokens) {
+                words.addAll(tokens.getOrDefault(token, new ArrayList<>()));
+            }
+        }
+
+        // If tokens not valid, add all words
+        if (words.isEmpty()) {
+            words.addAll(dictionary);
+        }
+
+        // Filter by size (must be within edit distance)
+        words.removeIf(w -> Math.abs(w.length() - word.length()) > editDistanceLimit);
+
+        // Return words
+        return new ArrayList<>(words);
+    }
+
+    private void addTokenizedWord(String word) {
+        // Check if word can be tokenized
+        if (word.length() < (tokenSize + 1)) {
+            return;
+        }
+
+        // Add tokens
+        addTokens(word, tokenizeWord(word));
+    }
+
+    private List<String> tokenizeWord(String word) {
+        List<String> tokens = new ArrayList<>();
+
+        for (int i = 0; i < word.length() - tokenSize; i++) {
+            String token = word.substring(i, i + tokenSize);
+            tokens.add(token);
+        }
+
+        return tokens;
+    }
+
+    private void addTokens(String word, List<String> newTokens) {
+        for (String token : newTokens) {
+            tokens.computeIfAbsent(token, k -> new ArrayList<>());
+
+            // Add token
+            tokens.get(token).add(word);
         }
     }
 
